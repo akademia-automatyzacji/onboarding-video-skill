@@ -2,19 +2,30 @@
 
 Bundled resource dla skilla `create-onboarding-video`. **Wczytaj tylko gdy dodajesz lub edytujesz beat z tapem.** Czysto wizualne beaty (glow rings, animowane state changes, lądujące rezultaty) nie potrzebują cursora i nie potrzebują tego pliku.
 
-Skill dostarcza trzy primitivy, wszystkie w jednym pliku `src/components/Cursor.tsx`:
+Skill dostarcza cztery primitivy, wszystkie w jednym pliku `src/components/Cursor.tsx`:
 
-| Primitive | Do czego |
-|-----------|----------|
-| `Pointer` | Persistent translucent kropka która **rusza się** żeby prowadzić wzrok. Wymagana przy każdym tapie. |
-| `TapDot` | Krótki ripple w momencie tapu. Zawsze nakładaj **na** `Pointer` na tych samych coords. |
-| `GlowRing` | Pulsująca poświata wokół chipa/przycisku do *highlightowania* feature'u bez tapu. Tylko na czysto wizualnych beatach. |
+| Primitive | Do czego | Kiedy |
+|-----------|----------|-------|
+| `Pointer` | Persistent translucent kropka która **rusza się** żeby prowadzić wzrok. | **Mobile UI** — taps na ekranie telefonu, iOS/Android UX |
+| `MousePointer` | Klasyczna myszka (SVG arrow / hand). Również glide do targetu. | **Web/desktop UI** — landing pages, SaaS, dashboardy, browser apps |
+| `TapDot` | Krótki ripple w momencie tapu/kliku. Nakładaj **na** Pointer/MousePointer w tych samych coords. | Każdy tap/klik |
+| `GlowRing` | Pulsująca poświata wokół chipa/przycisku do *highlightowania* feature'u bez tapu. | Czysto wizualne beaty (illustrative) |
 
 ## Zasada której pilnuje ten resource
 
 > **Cursor prowadzi każdy tap.** Sam tap ripple to za mało — viewer musi zobaczyć jak cursor doleciał do targetu **przed** ripplem. Brak teleportacji, brak jump-cutów.
 
-Jeśli beat ma jakikolwiek tap/klik/selekcję, render `Pointer` którego coords interpolują z off-target start position do targetu, i nałóż `TapDot` w momencie kontaktu. Zawsze para — dzielą `x`/`y`.
+Jeśli beat ma jakikolwiek tap/klik/selekcję, render `Pointer` (mobile) lub `MousePointer` (web), którego coords interpolują z off-target start position do targetu, i nałóż `TapDot` w momencie kontaktu. Zawsze para — dzielą `x`/`y`.
+
+## Wybór wariantu cursora
+
+Decyzja zależy od *czy UI w stillach jest mobile czy web/desktop*. Trzymaj konsekwencję w obrębie jednego wideo — nie mieszaj wariantów chyba że specjalnie pokazujesz przejście (np. "robi to z laptopa, ale działa też na telefonie").
+
+| UI w stillach | Cursor primitive | Argument |
+|---------------|------------------|----------|
+| iPhone / Android (screenshoty 390×844, 1170×2532 itp.) | `Pointer` (touch dot) | Touch dot = wizualnie reprezentuje palec/touchpoint, native iOS/Android UX |
+| Web landing / SaaS dashboard / browser app | `MousePointer` (arrow lub hand) | Myszka = native interaction model na desktopie, viewer kojarzy z "user klika myszką" |
+| Hybrid (np. responsive web na desktopie i mobile) | Wybierz dominującą formę | Jeśli na video pokazujesz desktop screenshot — myszka. Jeśli telefon — touch dot |
 
 ## Source komponentu
 
@@ -97,14 +108,23 @@ export const TapDot: React.FC<{
 
 /**
  * Persistent translucent kropka. Używaj żeby *prowadzić* wzrok do tap targetu.
- * Wymagana na każdym beacie który ma tap lub selekcję.
+ * Wymagana na każdym beacie który ma tap lub selekcję (mobile UI).
  */
 export const Pointer: React.FC<{
   x: number;
   y: number;
   size?: number;
   opacity?: number;
-}> = ({ x, y, size = 64, opacity = 1 }) => (
+  background?: string;
+  border?: string;
+}> = ({
+  x,
+  y,
+  size = 64,
+  opacity = 1,
+  background = "rgba(15, 23, 42, 0.42)",
+  border = "4px solid rgba(255, 255, 255, 0.85)",
+}) => (
   <div
     style={{
       position: "absolute",
@@ -113,14 +133,79 @@ export const Pointer: React.FC<{
       width: size,
       height: size,
       borderRadius: "50%",
-      background: "rgba(15, 23, 42, 0.42)",
-      border: "4px solid rgba(255, 255, 255, 0.85)",
-      boxShadow: "0 8px 24px rgba(15, 23, 42, 0.28)",
+      background,
+      border,
+      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
       opacity,
       pointerEvents: "none",
     }}
   />
 );
+
+/**
+ * Klasyczna myszka (SVG). Używaj zamiast Pointer dla web/desktop UI.
+ * Dwa warianty:
+ *  - "arrow" (default): Mac/Windows-style cursor — universal default
+ *  - "hand": dłoń z palcem — gdy chcesz zasugerować klikalność (CTA / link)
+ *
+ * Tip-of-cursor jest w punkcie (x, y) — więc przy pozycjonowaniu podawaj
+ * coords w *tym samym miejscu* gdzie nakładasz TapDot.
+ */
+export const MousePointer: React.FC<{
+  x: number;
+  y: number;
+  size?: number;
+  opacity?: number;
+  variant?: "arrow" | "hand";
+  color?: string;
+}> = ({
+  x,
+  y,
+  size = 48,
+  opacity = 1,
+  variant = "arrow",
+  color = "#1A1A1A",
+}) => {
+  const ArrowSVG = (
+    <svg viewBox="0 0 24 24" width={size} height={size}>
+      <path
+        d="M2 2 L2 18 L7 14 L10 20 L13 18.5 L10 12.5 L17 12 Z"
+        fill={color}
+        stroke="white"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const HandSVG = (
+    <svg viewBox="0 0 24 24" width={size} height={size}>
+      <path
+        d="M7 11 V5 a1.5 1.5 0 0 1 3 0 V10 V3 a1.5 1.5 0 0 1 3 0 V10 V4 a1.5 1.5 0 0 1 3 0 V11 V6 a1.5 1.5 0 0 1 3 0 V14 c0 4-3 7-7 7 h-1 c-3 0-5-2-5-5 V11 Z"
+        fill={color}
+        stroke="white"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: x, // tip-of-cursor at (x, y), no centering offset
+        top: y,
+        width: size,
+        height: size,
+        opacity,
+        pointerEvents: "none",
+        filter: "drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35))",
+        zIndex: 5,
+      }}
+    >
+      {variant === "arrow" ? ArrowSVG : HandSVG}
+    </div>
+  );
+};
 
 /**
  * Look-here pulse dla *wizualnych* beatów. Bez implikowanego tapu.
@@ -175,6 +260,31 @@ export const GlowRing: React.FC<{
   );
 };
 ```
+
+## MousePointer — pattern dla web/desktop
+
+Identyczny ruch jak `Pointer` (fade-in w centrum → straight glide do targetu → click → fade-out). Jedyna różnica: myszka ma **tip w punkcie (x, y)**, nie center jak touch dot. Czyli przy pozycjonowaniu coords podajesz *gdzie ma trafić tip*, nie środek.
+
+```tsx
+// Web beat — klik na CTA "Dołącz do Akademii"
+import { MousePointer, TapDot } from "../components/Cursor";
+
+const CTA_X = 270; // tip myszki ląduje TU
+const CTA_Y = 825;
+
+const moveProgress = interpolate(frame, [p(16), tapAt], [0, 1], {
+  easing: Easing.bezier(0.16, 1, 0.3, 1),
+  extrapolateLeft: "clamp",
+  extrapolateRight: "clamp",
+});
+const cursorX = interpolate(moveProgress, [0, 1], [SCREEN_W / 2, CTA_X]);
+const cursorY = interpolate(moveProgress, [0, 1], [SCREEN_H / 2, CTA_Y]);
+
+<MousePointer x={cursorX} y={cursorY} opacity={pointerOpacity} variant="arrow" />
+<TapDot tapAt={tapAt} x={CTA_X} y={CTA_Y} size={120} color="rgba(248, 242, 229, 0.85)" />
+```
+
+Variant "hand" przydaje się gdy hover na link/CTA — np. pokazujesz że link jest klikalny zanim user faktycznie kliknie. Hybryda: zmień variant z "arrow" na "hand" w momencie hovera nad CTA przez `interpolate` na opacity dwóch instancji.
 
 ## Canonical pattern A — pojedynczy tap (fade-in w centrum, glide do targetu)
 

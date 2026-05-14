@@ -49,6 +49,7 @@ Dla każdego ekranu który user chce pokazać, zbierz:
 2. **Co robi feature** — 1-2 zdania o tym co ten ekran daje userowi i co sprawia że feel-good. To decyduje na którym detalu się zoomujesz.
 3. **Kolejność** — sekwencja ekranów w onboardingu.
 4. **Brand & format:** kolory, font, aspect ratio, end-card / CTA — **zawsze pytaj per projekt**, nie zakładaj defaultów. Każdy projekt (Padlement, Olimp, Akademia Automatyzacji, klient X) ma własną paletę.
+5. **Typ UI (driver cursora):** mobile app (iPhone/Android screenshoty) → `Pointer` touch dot. Web/desktop (landing page, dashboard, SaaS) → `MousePointer` (arrow/hand). Trzymaj konsekwencję w obrębie wideo.
 
 Użyj `AskUserQuestion` jak user jest niejasny. Nie zaczynaj renderowania bez stilli + intencji per ekran.
 
@@ -90,7 +91,7 @@ Po akceptacji:
 - **Jeden feature per wideo.** Jak user opisuje 5 niezwiązanych features — zaproponuj podział na 5 wideo.
 - **Show, don't narrate.** Bez voiceovera, bez wielkich napisów tłumaczących feature. UI motion niesie znaczenie. Krótki caption per beat OK.
 - **Captions na top, widoczne cały beat, animacja rise-in.** Szczegóły, zasady i komponent: `resources/caption-component.md` — wczytaj **gdy** dodajesz lub edytujesz captiony.
-- **Cursor prowadzi każdy tap.** Beat z tapem/kliknięciem/selekcją wymaga widocznego cursora który dolatuje do targetu. Szczegóły, kod komponentu i canonical patterns: `resources/cursor-component.md` — wczytaj **gdy** dodajesz lub edytujesz beat z tapem.
+- **Cursor prowadzi każdy tap.** Beat z tapem/kliknięciem/selekcją wymaga widocznego cursora który dolatuje do targetu. Dla **mobile UI** użyj `Pointer` (touch dot), dla **web/desktop UI** użyj `MousePointer` (SVG arrow lub hand) — konsekwentnie w obrębie jednego wideo. Szczegóły, kod komponentu i canonical patterns: `resources/cursor-component.md` — wczytaj **gdy** dodajesz lub edytujesz beat z tapem.
 - **Match design language stilli.** Używaj kolorów, corner radii, typografii ze stilli. Nie restyluj.
 - **Code rules delegowane.** Zasady kodu Remotion (interpolate vs CSS transitions, easing, static files, Sequencing, fonty) → skill `remotion-best-practices`. Nie dubluj.
 
